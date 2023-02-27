@@ -8,20 +8,15 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 
-import org.xutils.http.RequestParams;
-import org.xutils.x;
-
-import cn.synzbtech.ota.core.Api;
 import cn.synzbtech.ota.core.DeviceInfoWrapper;
 import cn.synzbtech.ota.core.entity.DeviceEntity;
 import cn.synzbtech.ota.core.entity.DeviceInfo;
-import cn.synzbtech.ota.core.entity.ResultWrapper;
+
 import cn.synzbtech.ota.core.network.HyyHttpClient;
+
 import cn.synzbtech.ota.utils.DeviceUtils;
-import okhttp3.MediaType;
+
 
 /**
  * 监控检测服务。保持和服务器的链接，并每个60秒上报设备信息。需要上报的信息参考{@see DeviceInfo}
@@ -74,7 +69,6 @@ public class MonitoringService extends Service {
 
         String mac = DeviceUtils.yfgetEthMacAddress().trim();
 
-        MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
         DeviceEntity deviceEntity = new DeviceEntity();
         deviceEntity.setCpu(cpuSerialNo);
         deviceEntity.setMac(mac);

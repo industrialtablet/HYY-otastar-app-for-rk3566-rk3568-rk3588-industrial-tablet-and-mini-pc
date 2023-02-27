@@ -8,6 +8,6 @@ package cn.synzbtech.ota;
  */
 public class AppConfig {
     public static final String HOST = "";
-    public static final String APPID="";
-    public static final String SECRET_KEY="";
+    public static final String APPID="1629810423988346881";
+    public static final String SECRET_KEY="ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SmhjSEJKWkNJNklqRTJNams0TVRBME1qTTVPRGd6TkRZNE9ERWlMQ0oxYzJWeVRtRnRaU0k2SWpJeE1EQTVPVGxBY1hFdVkyOXRJaXdpWlhod0lqb3lORFkyTXpNd05EWXdMQ0oxYzJWeVNXUWlPaUl4SW4wLjc2NHowMEt3Ui14dGpmeVdqR1FtakNvRUpQdGM3RnBWam45VkdRelJWanc=";
 }

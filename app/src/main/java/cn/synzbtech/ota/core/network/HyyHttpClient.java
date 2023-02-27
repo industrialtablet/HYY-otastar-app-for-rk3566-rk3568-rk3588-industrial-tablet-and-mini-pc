@@ -1,6 +1,5 @@
 package cn.synzbtech.ota.core.network;
 
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
@@ -9,18 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
-import java.io.IOException;
-import java.util.HashMap;
+
 import java.util.Map;
 
 import cn.synzbtech.ota.AppConfig;
-import okhttp3.FormBody;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+
 
 /**
  * http client is a network request utility class. This class implements both synchronous and asynchronous get and post methods.
@@ -34,8 +26,8 @@ public class HyyHttpClient {
     private static final String TAG ="HyyHttpClient";
     public String HOST = "http://192.168.1.11:8081/api/"; //Address of the host providing the service, http protocol
 
-    public String APPID = "1629375064388136961";
-    public String SECRET_EY = "ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SmhjSEJKWkNJNklqRTJNamt6TnpVd05qUXpPRGd4TXpZNU5qRWlMQ0oxYzJWeVRtRnRaU0k2SW1Ga2JXbHVJaXdpWlhod0lqb3lORFkyTWpJMk5qWXlMQ0oxYzJWeVNXUWlPaUl4SW4wLm5LVXBjZU9icXlzRFRZOElNb1E3TnRkeU5PYmxMRVZJUWRobHZzeERtalE=";
+    public static String  APPID = "1629375064388136961";
+    public static String SECRET_EY = "ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SmhjSEJKWkNJNklqRTJNamt6TnpVd05qUXpPRGd4TXpZNU5qRWlMQ0oxYzJWeVRtRnRaU0k2SW1Ga2JXbHVJaXdpWlhod0lqb3lORFkyTWpJMk5qWXlMQ0oxYzJWeVNXUWlPaUl4SW4wLm5LVXBjZU9icXlzRFRZOElNb1E3TnRkeU5PYmxMRVZJUWRobHZzeERtalE=";
     private static HyyHttpClient mInstance;
     public static synchronized HyyHttpClient getInstance(){
 

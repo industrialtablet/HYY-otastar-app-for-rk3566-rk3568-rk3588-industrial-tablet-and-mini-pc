@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 
+import cn.synzbtech.ota.AppConfig;
 import cn.synzbtech.ota.OtaApplication;
 import cn.synzbtech.ota.R;
 import cn.synzbtech.ota.core.Api;
@@ -39,9 +41,12 @@ import cn.synzbtech.ota.core.ApiService;
 import cn.synzbtech.ota.core.entity.ApkUpgradeMainEvent;
 import cn.synzbtech.ota.core.entity.DeviceInfo;
 import cn.synzbtech.ota.core.entity.PackUpgradeMainEvent;
+import cn.synzbtech.ota.core.network.HyyHttpClient;
+import cn.synzbtech.ota.core.network.WebSocketClient;
 import cn.synzbtech.ota.core.zookeeper.ZKUtils;
 import cn.synzbtech.ota.service.CheckUpdateService;
 import cn.synzbtech.ota.service.MonitoringService;
+import cn.synzbtech.ota.service.WatchdogService;
 import cn.synzbtech.ota.utils.DeviceUtils;
 import cn.synzbtech.ota.utils.FileUtils;
 import cn.synzbtech.ota.utils.NotificationUtils;
@@ -305,16 +310,22 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.e("smallstar", android.os.Build.MODEL);
         setContentView(R.layout.activity_main);
         StatusBarCompat.translucentStatusBar(this);
         StatusBarCompat.translucentStatusBar(this, true);
         setupViews();
 
-        Log.e("smallstar", android.os.Build.MODEL);
         deviceInfo = DeviceUtils.collectDeviceInfo();
+
+        //....
+        String appid = TextUtils.isEmpty(AppConfig.APPID)? HyyHttpClient.APPID: AppConfig.APPID;
+        WebSocketClient.connect(appid, deviceInfo.getCpuId());
 
         OtaUtils.startService(this, MonitoringService.class);
         OtaUtils.startService(this, CheckUpdateService.class);
+        OtaUtils.startService(this, WatchdogService.class);
 
         setViewData();
 
