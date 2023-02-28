@@ -18,6 +18,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.alibaba.fastjson.JSON;
+import com.gnepux.wsgo.WsGo;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -29,6 +32,8 @@ import org.xutils.x;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
@@ -38,13 +43,16 @@ import cn.synzbtech.ota.OtaApplication;
 import cn.synzbtech.ota.R;
 import cn.synzbtech.ota.core.Api;
 import cn.synzbtech.ota.core.ApiService;
+import cn.synzbtech.ota.core.Constants;
+import cn.synzbtech.ota.core.DeviceInfoWrapper;
 import cn.synzbtech.ota.core.entity.ApkUpgradeMainEvent;
 import cn.synzbtech.ota.core.entity.DeviceInfo;
 import cn.synzbtech.ota.core.entity.PackUpgradeMainEvent;
 import cn.synzbtech.ota.core.network.HyyHttpClient;
+import cn.synzbtech.ota.core.network.MessageBody;
 import cn.synzbtech.ota.core.network.WebSocketClient;
 import cn.synzbtech.ota.core.zookeeper.ZKUtils;
-import cn.synzbtech.ota.service.CheckUpdateService;
+
 import cn.synzbtech.ota.service.MonitoringService;
 import cn.synzbtech.ota.service.WatchdogService;
 import cn.synzbtech.ota.utils.DeviceUtils;
@@ -286,26 +294,33 @@ public class MainActivity extends AppCompatActivity {
         }
         builder.setTitle("Upgrade").setMessage(upgradeMessage)
                 .setCancelable(false)
-                .setPositiveButton("Upgrade", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(MainActivity.this,"Start Upgrade", Toast.LENGTH_SHORT).show();
-                        doDownloadUpgrade(type);
+                .setPositiveButton("Upgrade", (dialog, which) -> {
+                    Toast.makeText(MainActivity.this,"Start Upgrade", Toast.LENGTH_SHORT).show();
+                    doDownloadUpgrade(type);
+                    sendDownloadOperationResult(Constants.COMMEND_OTA_DOWNLOAD_START);
+
+                }).setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                    if(type.equalsIgnoreCase("apk")) {
+                        OtaApplication.apkUpgradeState = Api.UpgradeState.CHECK;
+                        PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.CHECK);
+                    } else if(type.equalsIgnoreCase("ota")) {
+                        OtaApplication.packUpgradeState = Api.UpgradeState.CHECK;
+                        PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.CHECK);
+
+                        sendDownloadOperationResult(Constants.COMMEND_OTA_DOWNLOAD_CANCEL);
                     }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        if(type.equalsIgnoreCase("apk")) {
-                            OtaApplication.apkUpgradeState = Api.UpgradeState.CHECK;
-                            PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.CHECK);
-                        } else if(type.equalsIgnoreCase("ota")) {
-                            OtaApplication.packUpgradeState = Api.UpgradeState.CHECK;
-                            PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.CHECK);
-                        }
-                    }
-        });
+                });
         alertUpgradeDialog = builder.show();
+    }
+
+    private void sendDownloadOperationResult(int command){
+        Map<String, Object> data = new HashMap<>();
+        data.put("cpuid", DeviceInfoWrapper.deviceInfo.getCpuId());
+        String appid = TextUtils.isEmpty(AppConfig.APPID)?HyyHttpClient.APPID:AppConfig.APPID;
+        data.put("appid", appid);
+        MessageBody messageBody = new MessageBody(command, data);
+        WsGo.getInstance().send(JSON.toJSONString(messageBody));
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -319,9 +334,10 @@ public class MainActivity extends AppCompatActivity {
 
         deviceInfo = DeviceUtils.collectDeviceInfo();
 
-        //....
+        // start web socket.
         String appid = TextUtils.isEmpty(AppConfig.APPID)? HyyHttpClient.APPID: AppConfig.APPID;
-        WebSocketClient.connect(appid, deviceInfo.getCpuId());
+        WebSocketClient.connect(this, appid, deviceInfo.getCpuId());
+
 
         OtaUtils.startService(this, MonitoringService.class);
         //OtaUtils.startService(this, CheckUpdateService.class);
@@ -484,6 +500,7 @@ public class MainActivity extends AppCompatActivity {
         String downloadFile = "";
         if(type.equalsIgnoreCase("apk")) {
             url =  PreferenceUtils.getInstance().getApkUpgradeUrl();
+            url = url.split(",")[0];
             downloadFile = FileUtils.getSaveFilePath(url);
         } else if(type.equalsIgnoreCase("ota")) {
             url = PreferenceUtils.getInstance().getPackUpgradeUrl();
@@ -528,12 +545,13 @@ public class MainActivity extends AppCompatActivity {
                 } else if (type.equalsIgnoreCase("ota")) {
                     OtaApplication.packUpgradeState = Api.UpgradeState.DOWNLOAD_COMPLETE;
                     PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.DOWNLOAD_COMPLETE);
+
                     PreferenceUtils.getInstance().setPackSaveStorage(result.getAbsolutePath());
 
                     OtaApplication.packUpgradeState = Api.UpgradeState.INSTALL_COMPLETE;
                     PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.INSTALL_COMPLETE);
-
                 }
+
                 ApiService.getInstance().doLogUpgrade(type);
             }
 

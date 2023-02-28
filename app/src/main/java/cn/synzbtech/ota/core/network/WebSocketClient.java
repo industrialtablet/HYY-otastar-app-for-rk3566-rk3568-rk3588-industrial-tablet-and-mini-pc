@@ -1,5 +1,6 @@
 package cn.synzbtech.ota.core.network;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.gnepux.wsgo.WsConfig;
@@ -11,7 +12,7 @@ public class WebSocketClient {
 
     private static final String WS_URL = "ws://192.168.1.11:8081/otastar/";
 
-    public static void connect(String appid, String cpuId) {
+    public static void connect(Context context, String appid, String cpuId) {
 
         Log.d("WebSocketClient", "device will connect ws, appid="+appid+", cpuId="+cpuId);
 
@@ -25,7 +26,7 @@ public class WebSocketClient {
                 .setPingInterval(10 * 1000L)    // initial ping interval
                 .setWebSocket(JWebSocket.create()) // websocket client
                 .setRetryStrategy(retryCount -> 3000)    // retry count and delay time strategy
-                .setEventListener(new WebSocketEventListener()) // event listener
+                .setEventListener(new WebSocketEventListener(context)) // event listener
                 .build();
 
         WsGo.init(config);
