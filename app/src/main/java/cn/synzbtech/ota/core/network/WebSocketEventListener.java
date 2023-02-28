@@ -3,7 +3,15 @@ package cn.synzbtech.ota.core.network;
 
 import android.util.Log;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.gnepux.wsgo.EventListener;
+import com.gnepux.wsgo.WsGo;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import cn.synzbtech.ota.core.Constants;
 
 public class WebSocketEventListener implements EventListener {
 
@@ -25,7 +33,22 @@ public class WebSocketEventListener implements EventListener {
 
     @Override
     public void onMessage(String text) {
-        Log.d(TAG, "onMessage:"+text);
+        Log.d(TAG, "onMessage : " + text);
+        MessageBody messageBody = JSON.parseObject(text, MessageBody.class);
+        switch (messageBody.getCommand()) {
+
+            case Constants.COMMEND_UPDATE_OTA_NOTIFY: {
+                JSONObject obj = (JSONObject) messageBody.getData();
+                String url = obj.getString("url");
+                Long upgradeRunId = obj.getLong("upgradeRunId");
+                Map<String, Object> dataMap = new HashMap<>();
+                dataMap.put("upgradeRunId", upgradeRunId);
+                MessageBody ack = new MessageBody(Constants.COMMEND_UPDATE_OTA_ACK, dataMap);
+                WsGo.getInstance().send(JSON.toJSONString(ack));
+                break;
+            }
+
+        }
     }
 
     @Override

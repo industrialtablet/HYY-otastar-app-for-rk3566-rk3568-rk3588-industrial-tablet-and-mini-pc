@@ -324,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
         WebSocketClient.connect(appid, deviceInfo.getCpuId());
 
         OtaUtils.startService(this, MonitoringService.class);
-        OtaUtils.startService(this, CheckUpdateService.class);
+        //OtaUtils.startService(this, CheckUpdateService.class);
         OtaUtils.startService(this, WatchdogService.class);
 
         setViewData();
