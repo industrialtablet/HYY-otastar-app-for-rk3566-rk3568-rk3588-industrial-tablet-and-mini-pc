@@ -1,14 +1,22 @@
-# otastar, The android client of ota uprade 
+# OTAstar
 
-## introduction
+# 		——Best ota uprade application for your android
 
-OTA star is an android and multi-user OTA upgrade program, you will need to obtain the appropriate appid and key from our platform services. Configure in AppConfig to ensure that your device can normally request server upgrades and other resources. Please refer to how to obtain appid and secret key (How to obtain appid and secret key).
 
-## How to obtain appid and secret key
+
+## 1. introduction
+
+OTAstar is an android and multi-user OTA upgrade program. You will need obtain the appropriate appid and key from our platform services. Configure in AppConfig to ensure that your device can normally request server upgrades and other resources. Please refer to how to obtain appid and secret key (How to obtain appid and secret key).
+
+## 2. Supported Devices
+
+RK3566 RK3568 RK3588 S905x4
+
+## 3. Obtain appid and secret key
 
 // todo 
 
-## How to configuration appid and secret key 
+## 4. Configuration appid and secret key 
 
 Open the AppConfig file in the cn/syzbtech/ota package, then set your Appid and secret key into the APPID field and SECRET_KEY field of this class
 
@@ -20,7 +28,7 @@ public class AppConfig {
 }
 ```
 
-## How to install as system application
+## 5. Install as system application
 
 ```
 adb root
