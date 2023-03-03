@@ -10,7 +10,7 @@ import com.gnepux.wsgo.jwebsocket.JWebSocket;
 import java.util.HashMap;
 public class WebSocketClient {
 
-    private static final String WS_URL = "ws://192.168.1.11:8081/otastar/";
+    private static final String WS_URL = "ws://"+HyyHttpClient.HOST_NAME+"/otastar/";
 
     public static void connect(Context context, String appid, String cpuId) {
 

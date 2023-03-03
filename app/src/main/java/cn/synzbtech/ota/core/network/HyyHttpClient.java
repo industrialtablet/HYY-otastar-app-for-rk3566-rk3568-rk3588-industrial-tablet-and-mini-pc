@@ -24,7 +24,10 @@ import cn.synzbtech.ota.AppConfig;
  */
 public class HyyHttpClient {
     private static final String TAG ="HyyHttpClient";
-    public String HOST = "http://192.168.1.11:8081/api/"; //Address of the host providing the service, http protocol
+
+    public static final String HOST_NAME = "ota.fast.szhyy.xyz";
+    //public static final String HOST_NAME = "192.168.1.14:8080";
+    public String HOST = "http://"+HOST_NAME+"/api/"; //Address of the host providing the service, http protocol
 
     public static String  APPID = "1629375064388136961";
     public static String SECRET_EY = "ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SmhjSEJKWkNJNklqRTJNamt6TnpVd05qUXpPRGd4TXpZNU5qRWlMQ0oxYzJWeVRtRnRaU0k2SW1Ga2JXbHVJaXdpWlhod0lqb3lORFkyTWpJMk5qWXlMQ0oxYzJWeVNXUWlPaUl4SW4wLm5LVXBjZU9icXlzRFRZOElNb1E3TnRkeU5PYmxMRVZJUWRobHZzeERtalE=";
@@ -33,9 +36,7 @@ public class HyyHttpClient {
 
         if(mInstance==null){
             mInstance = new HyyHttpClient();
-            if(StringUtils.isNotEmpty(AppConfig.HOST)){
-                mInstance.host(AppConfig.HOST);
-            }
+
             if(StringUtils.isNotEmpty(AppConfig.APPID)){
                 mInstance.appid(AppConfig.APPID);
             }
