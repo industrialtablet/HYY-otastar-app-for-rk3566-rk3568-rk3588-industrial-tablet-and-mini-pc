@@ -158,102 +158,106 @@ public class CheckUpdateService extends Service {
             Log.d(TAG, "check apk and ota >>> response code " + resultWrapper);
             return resultWrapper.getData();
         }
+
+
+        private void doGetUpdateVersion(){
+            Log.d(TAG, "start get upgrade. is apk upgrade " + OtaApplication.apkUpgradeState+", is pack upgrade " + OtaApplication.packUpgradeState);
+
+            if(OtaApplication.apkUpgradeState != Api.UpgradeState.CHECK) {
+                if(OtaApplication.apkUpgradeState==Api.UpgradeState.NEED_DOWNLOAD) {
+                    ApkVersion apkVersion = getApkVersion();
+                    if(apkVersion==null) { // 取消了。通知现在停止，具体停止请查看 MainActivity packUpgradeEvent 方法为-2的分支
+                        OtaApplication.apkUpgradeState = Api.UpgradeState.CHECK;
+                        PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.CHECK);
+                        EventBus.getDefault().post(new ApkUpgradeMainEvent(Api.DownloadState.CANCELED));
+                    }
+
+
+                } else if(OtaApplication.apkUpgradeState >= Api.UpgradeState.DOWNLOAD_COMPLETE) {
+                    apkState++;
+                    if(apkState>=3) {
+                        OtaApplication.apkUpgradeState = Api.UpgradeState.CHECK;
+                        PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.CHECK);
+                    }
+                }
+                return;
+            }
+
+            if(OtaApplication.packUpgradeState != Api.UpgradeState.CHECK) {
+
+                //如果正在下载
+                if(OtaApplication.packUpgradeState==Api.UpgradeState.NEED_DOWNLOAD) {
+                    //获取是否取消了下载。
+                    OtaVersion packVersion = getOtaVersion();
+                    if(packVersion==null) {// 取消了。通知现在停止，具体停止请查看 MainActivity packUpgradeEvent 方法为-2的分支
+                        OtaApplication.packUpgradeState = Api.UpgradeState.CHECK;
+                        PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.CHECK);
+                        EventBus.getDefault().post(new PackUpgradeMainEvent(Api.DownloadState.CANCELED));
+                    }
+
+                } else if(OtaApplication.packUpgradeState>= Api.UpgradeState.DOWNLOAD_COMPLETE) {
+                    packState++;
+                }
+
+                if(packState>=3) {
+                    OtaApplication.packUpgradeState = Api.UpgradeState.CHECK;
+                    PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.CHECK);
+                }
+                return;
+            }
+
+            UpdateVersion updateVersion = getUpdateVersion();
+            if(updateVersion==null){
+                return;
+            }
+            ApkVersion apkVersion = updateVersion.getApkVersion();
+            if(apkVersion!=null) {
+                OtaApplication.apkUpgradeState = Api.UpgradeState.NEED_DOWNLOAD;
+                PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.NEED_DOWNLOAD);
+                PreferenceUtils.getInstance().setApkUpgradeUrl(apkVersion.getUrl());
+
+                Log.d(TAG, "apk upgrade version " + apkVersion.getUrl());
+
+                boolean mainForeground = OtaUtils.isActivityForeground(CheckUpdateService.this, MainActivity.class.getSimpleName());
+                if (mainForeground) {
+                    EventBus.getDefault().post(new ApkUpgradeMainEvent());
+                } else {
+                    NotificationUtils.getInstance().sendNotification("升级通知", "有版本，请前往升级", "");
+                }
+            } else{
+                Log.d(TAG, "No apk upgrade required");
+            }
+
+            if(OtaApplication.apkUpgradeState != Api.UpgradeState.CHECK) {
+                return;
+            }
+
+            OtaVersion packVersion = updateVersion.getOtaVersion();
+            if(packVersion!=null) {
+                //下载pack包
+                OtaApplication.packUpgradeState =  Api.UpgradeState.NEED_DOWNLOAD;
+                Log.d(TAG, "pack upgrade version " + packVersion.getUrl());
+                PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.NEED_DOWNLOAD);
+                // 设置OTA下载地址,格式：url,md5
+                PreferenceUtils.getInstance().setPackUpgradeUrl(packVersion.getUrl() + "," + packVersion.getMd5());
+
+                boolean mainForeground = OtaUtils.isActivityForeground(CheckUpdateService.this, MainActivity.class.getSimpleName());
+                if (mainForeground) {
+                    EventBus.getDefault().post(new PackUpgradeMainEvent());
+                } else {
+                    NotificationUtils.getInstance().sendNotification("升级通知", "有新OTA版本，请前往升级", "");
+                }
+            } else{
+                Log.d(TAG, "No ota upgrade required");
+            }
+        }
         @Override
         public void run() {
 
             while (upgradeRunning) {
                 try {
                     Thread.sleep(CHECK_INTERVAL);
-
-                    Log.d(TAG, "start get upgrade. is apk upgrade " + OtaApplication.apkUpgradeState+", is pack upgrade " + OtaApplication.packUpgradeState);
-
-                    if(OtaApplication.apkUpgradeState != Api.UpgradeState.CHECK) {
-                        if(OtaApplication.apkUpgradeState==Api.UpgradeState.NEED_DOWNLOAD) {
-                            ApkVersion apkVersion = getApkVersion();
-                            if(apkVersion==null) { // 取消了。通知现在停止，具体停止请查看 MainActivity packUpgradeEvent 方法为-2的分支
-                                OtaApplication.apkUpgradeState = Api.UpgradeState.CHECK;
-                                PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.CHECK);
-                                EventBus.getDefault().post(new ApkUpgradeMainEvent(Api.DownloadState.CANCELED));
-                            }
-
-
-                        } else if(OtaApplication.apkUpgradeState >= Api.UpgradeState.DOWNLOAD_COMPLETE) {
-                            apkState++;
-                            if(apkState>=3) {
-                                OtaApplication.apkUpgradeState = Api.UpgradeState.CHECK;
-                                PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.CHECK);
-                            }
-                        }
-                        continue;
-                    }
-
-                    if(OtaApplication.packUpgradeState != Api.UpgradeState.CHECK) {
-
-                        //如果正在下载
-                        if(OtaApplication.packUpgradeState==Api.UpgradeState.NEED_DOWNLOAD) {
-                            //获取是否取消了下载。
-                            OtaVersion packVersion = getOtaVersion();
-                            if(packVersion==null) {// 取消了。通知现在停止，具体停止请查看 MainActivity packUpgradeEvent 方法为-2的分支
-                                OtaApplication.packUpgradeState = Api.UpgradeState.CHECK;
-                                PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.CHECK);
-                                EventBus.getDefault().post(new PackUpgradeMainEvent(Api.DownloadState.CANCELED));
-                            }
-
-                        } else if(OtaApplication.packUpgradeState>= Api.UpgradeState.DOWNLOAD_COMPLETE) {
-                            packState++;
-                        }
-
-                        if(packState>=3) {
-                            OtaApplication.packUpgradeState = Api.UpgradeState.CHECK;
-                            PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.CHECK);
-                        }
-                        continue;
-                    }
-
-                    UpdateVersion updateVersion = getUpdateVersion();
-                    if(updateVersion==null){
-                        continue;
-                    }
-                    ApkVersion apkVersion = updateVersion.getApkVersion();
-                    if(apkVersion!=null) {
-                        OtaApplication.apkUpgradeState = Api.UpgradeState.NEED_DOWNLOAD;
-                        PreferenceUtils.getInstance().setApkUpgradeState(Api.UpgradeState.NEED_DOWNLOAD);
-                        PreferenceUtils.getInstance().setApkUpgradeUrl(apkVersion.getUrl());
-
-                        Log.d(TAG, "apk upgrade version " + apkVersion.getUrl());
-
-                        boolean mainForeground = OtaUtils.isActivityForeground(CheckUpdateService.this, MainActivity.class.getSimpleName());
-                        if (mainForeground) {
-                            EventBus.getDefault().post(new ApkUpgradeMainEvent());
-                        } else {
-                            NotificationUtils.getInstance().sendNotification("升级通知", "有版本，请前往升级", "");
-                        }
-                    } else{
-                        Log.d(TAG, "No apk upgrade required");
-                    }
-
-                    if(OtaApplication.apkUpgradeState != Api.UpgradeState.CHECK) {
-                        continue;
-                    }
-
-                    OtaVersion packVersion = updateVersion.getOtaVersion();
-                    if(packVersion!=null) {
-                        //下载pack包
-                        OtaApplication.packUpgradeState =  Api.UpgradeState.NEED_DOWNLOAD;
-                        Log.d(TAG, "pack upgrade version " + packVersion.getUrl());
-                        PreferenceUtils.getInstance().setPackUpgradeState(Api.UpgradeState.NEED_DOWNLOAD);
-                        // 设置OTA下载地址,格式：url,md5
-                        PreferenceUtils.getInstance().setPackUpgradeUrl(packVersion.getUrl() + "," + packVersion.getMd5());
-
-                        boolean mainForeground = OtaUtils.isActivityForeground(CheckUpdateService.this, MainActivity.class.getSimpleName());
-                        if (mainForeground) {
-                            EventBus.getDefault().post(new PackUpgradeMainEvent());
-                        } else {
-                            NotificationUtils.getInstance().sendNotification("升级通知", "有新OTA版本，请前往升级", "");
-                        }
-                    } else{
-                        Log.d(TAG, "No ota upgrade required");
-                    }
+                    doGetUpdateVersion();
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
